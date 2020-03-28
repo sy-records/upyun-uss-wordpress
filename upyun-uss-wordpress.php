@@ -396,6 +396,7 @@ function uss_setting_page()
     ?>
     <div class="wrap" style="margin: 10px;">
         <h1>又拍云 USS 设置 <span style="font-size: 13px;">当前版本：<?php echo USS_VERSION; ?></span></h1>
+        <p>优惠促销： <a href="https://go.qq52o.me/a/upyun" target="_blank">点我注册并完成实名认证，赠送 61 元免费代金券</a></p>
         <p>如果觉得此插件对你有所帮助，不妨到 <a href="https://github.com/sy-records/upyun-uss-wordpress" target="_blank">Github</a> 上点个<code>Star</code>，<code>Watch</code>关注更新；
         </p>
         <hr/>
