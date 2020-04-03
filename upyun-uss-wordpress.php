@@ -3,7 +3,7 @@
 Plugin Name: USS Upyun
 Plugin URI: https://github.com/sy-records/upyun-uss-wordpress
 Description: 使用又拍云云存储USS作为附件存储空间。（This is a plugin that uses UPYUN Storage Service for attachments remote saving.）
-Version: 1.0.0
+Version: 1.0.1
 Author: 沈唁
 Author URI: https://qq52o.me
 License: Apache 2.0
@@ -11,7 +11,7 @@ License: Apache 2.0
 
 require_once 'sdk/vendor/autoload.php';
 
-define('USS_VERSION', "1.0.0");
+define('USS_VERSION', "1.0.1");
 define('USS_BASEFOLDER', plugin_basename(dirname(__FILE__)));
 
 use Upyun\Upyun;
@@ -57,7 +57,7 @@ function uss_get_bucket_name()
  * @param  $opt
  * @return bool
  */
-function uss_file_upload($object, $file)
+function uss_file_upload($object, $file, $no_local_file = false)
 {
     //如果文件不存在，直接返回false
     if (!@file_exists($file)) {
@@ -68,6 +68,9 @@ function uss_file_upload($object, $file)
         $client = uss_get_client();
         $res = $client->write($object, $file);
 //        var_dump($res);
+        if ($no_local_file) {
+            uss_delete_local_file($file);
+        }
     } else {
         return false;
     }
@@ -141,12 +144,8 @@ function uss_upload_attachments($metadata)
     $file = get_home_path() . $object; //向上兼容，较早的WordPress版本上$metadata['file']存放的是相对路径
 
     //执行上传操作
-    uss_file_upload('/' . $object, $file);
+    uss_file_upload('/' . $object, $file, uss_is_delete_local_file());
 
-    //如果不在本地保存，则删除本地文件
-    if (uss_is_delete_local_file()) {
-        uss_delete_local_file($file);
-    }
     return $metadata;
 }
 
@@ -166,8 +165,6 @@ function uss_upload_thumbs($metadata)
         $uss_options = get_option('uss_options', true);
         //是否需要上传缩略图
         $nothumb = (esc_attr($uss_options['nothumb']) == 'true');
-        //是否需要删除本地文件
-        $is_delete_local_file = (esc_attr($uss_options['nolocalsaving']) == 'true');
         //如果禁止上传缩略图，就不用继续执行了
         if ($nothumb) {
             return $metadata;
@@ -195,12 +192,7 @@ function uss_upload_thumbs($metadata)
             $file = $file_path . $val['file'];
 
             //执行上传操作
-            uss_file_upload($object, $file);
-
-            //如果不在本地保存，则删除
-            if ($is_delete_local_file) {
-                uss_delete_local_file($file);
-            }
+            uss_file_upload($object, $file, (esc_attr($uss_options['nolocalsaving']) == 'true'));
         }
     }
     return $metadata;

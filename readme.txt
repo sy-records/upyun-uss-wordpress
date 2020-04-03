@@ -3,9 +3,9 @@ Contributors: shenyanzhi
 Donate link: https://qq52o.me/sponsor.html
 Tags: USS, 又拍云, 对象存储, upyun, 云存储
 Requires at least: 4.2
-Tested up to: 5.3.2
+Tested up to: 5.4
 Requires PHP: 5.6.0
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: Apache 2.0
 License URI: http://www.apache.org/licenses/LICENSE-2.0.html
 
@@ -32,12 +32,13 @@ License URI: http://www.apache.org/licenses/LICENSE-2.0.html
 腾讯云COS：[GitHub](https://github.com/sy-records/wordpress-qcloud-cos)，[WordPress Plugins](https://wordpress.org/plugins/sync-qcloud-cos)
 华为云OBS：[GitHub](https://github.com/sy-records/huaweicloud-obs-wordpress)，[WordPress Plugins](https://wordpress.org/plugins/obs-huaweicloud)
 七牛云KODO：[GitHub](https://github.com/sy-records/qiniu-kodo-wordpress)，[WordPress Plugins](https://wordpress.org/plugins/kodo-qiniu)
+阿里云OSS：[GitHub](https://github.com/sy-records/aliyun-oss-wordpress)，[WordPress Plugins](https://wordpress.org/plugins/oss-aliyun)
 
 ## 作者博客
 
 [沈唁志](https://qq52o.me "沈唁志")
 
-接受定制开发 WordPress 插件，如有定制开发需求可以[联系QQ](ttp://wpa.qq.com/msgrd?v=3&uin=85464277&site=qq&menu=yes)。
+QQ交流群：887595381
 
 == Installation ==
 
@@ -58,5 +59,8 @@ License URI: http://www.apache.org/licenses/LICENSE-2.0.html
 
 == Changelog ==
 
-= 1.0 =
+= 1.0.1 =
+* 修复勾选不在本地保存图片后媒体库显示默认图片问题
+
+= 1.0.0 =
 * First version
