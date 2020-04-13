@@ -120,7 +120,7 @@ function uss_delete_local_file($file)
 function uss_delete_uss_file($file)
 {
     $client = uss_get_client();
-    $res = $client->delete($file);
+    $res = $client->delete($file, true);
 //    var_dump($res);
 }
 
@@ -132,19 +132,33 @@ function uss_delete_uss_file($file)
  */
 function uss_upload_attachments($metadata)
 {
-    //生成object在uss中的存储路径
-    if (get_option('upload_path') == '.') {
-        //如果含有“./”则去除之
-        $metadata['file'] = str_replace("./", '', $metadata['file']);
+    $mime_types = get_allowed_mime_types();
+    $image_mime_types = array(
+        $mime_types['jpg|jpeg|jpe'],
+        $mime_types['gif'],
+        $mime_types['png'],
+        $mime_types['bmp'],
+        $mime_types['tiff|tif'],
+        $mime_types['ico'],
+    );
+
+    // 例如mp4等格式 上传后根据配置选择是否删除 删除后媒体库会显示默认图片 点开内容是正常的
+    // 图片在缩略图处理
+    if (!in_array($metadata['type'], $image_mime_types)) {
+        //生成object在uss中的存储路径
+        if (get_option('upload_path') == '.') {
+            //如果含有“./”则去除之
+            $metadata['file'] = str_replace("./", '', $metadata['file']);
+        }
+        $object = str_replace("\\", '/', $metadata['file']);
+        $object = str_replace(get_home_path(), '', $object);
+
+        //在本地的存储路径
+        $file = get_home_path() . $object; //向上兼容，较早的WordPress版本上$metadata['file']存放的是相对路径
+
+        //执行上传操作
+        uss_file_upload('/' . $object, $file, uss_is_delete_local_file());
     }
-    $object = str_replace("\\", '/', $metadata['file']);
-    $object = str_replace(get_home_path(), '', $object);
-
-    //在本地的存储路径
-    $file = get_home_path() . $object; //向上兼容，较早的WordPress版本上$metadata['file']存放的是相对路径
-
-    //执行上传操作
-    uss_file_upload('/' . $object, $file, uss_is_delete_local_file());
 
     return $metadata;
 }
@@ -159,22 +173,27 @@ if (substr_count($_SERVER['REQUEST_URI'], '/update.php') <= 0) {
  */
 function uss_upload_thumbs($metadata)
 {
+    //获取上传路径
+    $wp_uploads = wp_upload_dir();
+    $basedir = $wp_uploads['basedir'];
+    //获取uss插件的配置信息
+    $uss_options = get_option('uss_options', true);
+    if (isset($metadata['file'])) {
+        // Maybe there is a problem with the old version
+        $object ='/' . get_option('upload_path') . '/' . $metadata['file'];
+        $file = $basedir . '/' . $metadata['file'];
+        uss_file_upload($object, $file, (esc_attr($uss_options['nolocalsaving']) == 'true'));
+    }
     //上传所有缩略图
     if (isset($metadata['sizes']) && count($metadata['sizes']) > 0) {
-        //获取uss插件的配置信息
-        $uss_options = get_option('uss_options', true);
         //是否需要上传缩略图
         $nothumb = (esc_attr($uss_options['nothumb']) == 'true');
         //如果禁止上传缩略图，就不用继续执行了
         if ($nothumb) {
             return $metadata;
         }
-        //获取上传路径
-        $wp_uploads = wp_upload_dir();
-        $basedir = $wp_uploads['basedir'];
-        $file_dir = $metadata['file'];
         //得到本地文件夹和远端文件夹
-        $file_path = $basedir . '/' . dirname($file_dir) . '/';
+        $file_path = $basedir . '/' . dirname($metadata['file']) . '/';
         if (get_option('upload_path') == '.') {
             $file_path = str_replace("\\", '/', $file_path);
             $file_path = str_replace(get_home_path() . "./", '', $file_path);
@@ -239,8 +258,8 @@ add_action('delete_attachment', 'uss_delete_remote_attachment');
 // 当upload_path为根目录时，需要移除URL中出现的“绝对路径”
 function uss_modefiy_img_url($url, $post_id)
 {
-    $home_path = str_replace(array('/', '\\'), array('', ''), get_home_path());
-    $url = str_replace($home_path, '', $url);
+    // 移除 ./ 和 项目根路径
+    $url = str_replace(array('./', get_home_path()), array('', ''), $url);
     return $url;
 }
 
@@ -523,7 +542,6 @@ function uss_setting_page()
             </table>
         </form>
     </div>
-    <?php
+<?php
 }
-
 ?>
