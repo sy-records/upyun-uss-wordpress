@@ -3,7 +3,7 @@
 Plugin Name: USS Upyun
 Plugin URI: https://github.com/sy-records/upyun-uss-wordpress
 Description: 使用又拍云云存储USS作为附件存储空间。（This is a plugin that uses UPYUN Storage Service for attachments remote saving.）
-Version: 1.1.0
+Version: 1.1.1
 Author: 沈唁
 Author URI: https://qq52o.me
 License: Apache 2.0
@@ -11,7 +11,7 @@ License: Apache 2.0
 
 require_once 'sdk/vendor/autoload.php';
 
-define('USS_VERSION', "1.0.1");
+define('USS_VERSION', "1.1.1");
 define('USS_BASEFOLDER', plugin_basename(dirname(__FILE__)));
 
 use Upyun\Upyun;
@@ -29,6 +29,7 @@ function uss_set_options()
         'nothumb' => "false", // 是否上传缩略图
         'nolocalsaving' => "false", // 是否保留本地备份
         'upload_url_path' => "", // URL前缀
+        'update_file_name' => "false", // 是否重命名文件名
     );
     add_option('uss_options', $options, '', 'yes');
 }
@@ -75,6 +76,21 @@ function uss_file_upload($object, $file, $no_local_file = false)
         return false;
     }
 }
+
+function uss_sanitize_file_name($filename)
+{
+    $uss_options = get_option('uss_options');
+    switch ($uss_options['update_file_name']) {
+        case "md5":
+            return  md5($filename) . "." . pathinfo($filename, PATHINFO_EXTENSION);
+        case "time":
+            return date("YmdHis", current_time('timestamp'))  . mt_rand(100, 999) . "." . pathinfo($filename, PATHINFO_EXTENSION);
+        default:
+            return $filename;
+    }
+}
+
+add_filter( 'sanitize_file_name', 'uss_sanitize_file_name', 10, 1 );
 
 /**
  * 是否需要删除本地文件
@@ -350,9 +366,8 @@ function uss_setting_page()
         $options['nothumb'] = isset($_POST['nothumb']) ? 'true' : 'false';
         $options['nolocalsaving'] = isset($_POST['nolocalsaving']) ? 'true' : 'false';
         //仅用于插件卸载时比较使用
-        $options['upload_url_path'] = isset($_POST['upload_url_path']) ? sanitize_text_field(
-            stripslashes($_POST['upload_url_path'])
-        ) : '';
+        $options['upload_url_path'] = isset($_POST['upload_url_path']) ? sanitize_text_field(stripslashes($_POST['upload_url_path'])) : '';
+        $options['update_file_name'] = isset($_POST['update_file_name']) ? sanitize_text_field($_POST['update_file_name']) : 'false';
     }
 
     if (!empty($_POST) and $_POST['type'] == 'upyun_uss_all') {
@@ -402,6 +417,8 @@ function uss_setting_page()
 
     $uss_nolocalsaving = esc_attr($uss_options['nolocalsaving']);
     $uss_nolocalsaving = ($uss_nolocalsaving == 'true');
+
+    $uss_update_file_name = esc_attr($uss_options['update_file_name']);
 
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
     ?>
@@ -453,6 +470,19 @@ function uss_setting_page()
                     </th>
                     <td>
                         <input type="checkbox" name="nolocalsaving" <?php if ($uss_nolocalsaving) { echo 'checked="checked"'; } ?> />
+                        <p>建议不勾选</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        <legend>自动重命名文件</legend>
+                    </th>
+                    <td>
+                        <select name="update_file_name">
+                            <option <?php if ($uss_update_file_name == 'false') {echo 'selected="selected"';} ?> value="false">不处理</option>
+                            <option <?php if ($uss_update_file_name == 'md5') {echo 'selected="selected"';} ?> value="md5">MD5</option>
+                            <option <?php if ($uss_update_file_name == 'time') {echo 'selected="selected"';} ?> value="time">时间戳+随机数</option>
+                        </select>
                         <p>建议不勾选</p>
                     </td>
                 </tr>
