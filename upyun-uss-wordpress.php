@@ -483,7 +483,6 @@ function uss_setting_page()
                             <option <?php if ($uss_update_file_name == 'md5') {echo 'selected="selected"';} ?> value="md5">MD5</option>
                             <option <?php if ($uss_update_file_name == 'time') {echo 'selected="selected"';} ?> value="time">时间戳+随机数</option>
                         </select>
-                        <p>建议不勾选</p>
                     </td>
                 </tr>
                 <tr>
