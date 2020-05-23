@@ -30,6 +30,7 @@ function uss_set_options()
         'nolocalsaving' => "false", // 是否保留本地备份
         'upload_url_path' => "", // URL前缀
         'update_file_name' => "false", // 是否重命名文件名
+        'image_process' => "", // 图片处理 https://console.upyun.com/services/process/
     );
     add_option('uss_options', $options, '', 'yes');
 }
@@ -332,6 +333,40 @@ function uss_read_dir_queue($dir)
     return $dd;
 }
 
+add_filter('the_content', 'uss_setting_content_img_process');
+function uss_setting_content_img_process($content)
+{
+    $option = get_option("uss_options");
+    if (!empty($option['image_process'])) {
+        preg_match_all('/<img.*?(?: |\\t|\\r|\\n)?src=[\'"]?(.+?)[\'"]?(?:(?: |\\t|\\r|\\n)+.*?)?>/sim', $content, $images);
+        if (!empty($images) && isset($images[1])) {
+            foreach ($images[1] as $item) {
+                if(strpos($item, $option['upload_url_path']) !== false){
+                    $content = str_replace($item, $item . $option['image_process'], $content);
+                }
+            }
+        }
+    }
+    return $content;
+}
+
+add_filter('post_thumbnail_html', 'uss_setting_post_thumbnail_img_process', 10, 3);
+function uss_setting_post_thumbnail_img_process( $html, $post_id, $post_image_id )
+{
+    $option = get_option("uss_options");
+    if (!empty($option['image_process']) && has_post_thumbnail()) {
+        preg_match_all('/<img.*?(?: |\\t|\\r|\\n)?src=[\'"]?(.+?)[\'"]?(?:(?: |\\t|\\r|\\n)+.*?)?>/sim', $html, $images);
+        if (!empty($images) && isset($images[1])) {
+            foreach ($images[1] as $item) {
+                if(strpos($item, $option['upload_url_path']) !== false){
+                    $html = str_replace($item, $item . $option['image_process'], $html);
+                }
+            }
+        }
+    }
+    return $html;
+}
+
 // 在插件列表页添加设置按钮
 function uss_plugin_action_links($links, $file)
 {
@@ -365,6 +400,7 @@ function uss_setting_page()
         $options['OperatorPwd'] = isset($_POST['OperatorPwd']) ? sanitize_text_field($_POST['OperatorPwd']) : '';
         $options['nothumb'] = isset($_POST['nothumb']) ? 'true' : 'false';
         $options['nolocalsaving'] = isset($_POST['nolocalsaving']) ? 'true' : 'false';
+        $options['image_process'] = isset($_POST['image_process']) ? sanitize_text_field($_POST['image_process']) : '';
         //仅用于插件卸载时比较使用
         $options['upload_url_path'] = isset($_POST['upload_url_path']) ? sanitize_text_field(stripslashes($_POST['upload_url_path'])) : '';
         $options['update_file_name'] = isset($_POST['update_file_name']) ? sanitize_text_field($_POST['update_file_name']) : 'false';
@@ -382,13 +418,24 @@ function uss_setting_page()
 
     // 替换数据库链接
     if (!empty($_POST) and $_POST['type'] == 'upyun_uss_replace') {
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'posts';
         $oldurl = esc_url_raw($_POST['old_url']);
         $newurl = esc_url_raw($_POST['new_url']);
-        $result = $wpdb->query("UPDATE $table_name SET post_content = REPLACE( post_content, '$oldurl', '$newurl') ");
 
-        echo '<div class="updated"><p><strong>替换成功！共批量执行' . $result . '条！</strong></p></div>';
+        if (empty($oldurl) || empty($newurl)) {
+            echo '<div class="error"><p><strong>替换域名不能为空。</strong></p></div>';
+        } else {
+            global $wpdb;
+
+            // 文章内容
+            $posts_name = $wpdb->prefix .'posts';
+            $posts_result = $wpdb->query("UPDATE $posts_name SET post_content = REPLACE( post_content, '$old_url', '$new_url') ");
+
+            // 修改题图之类的
+            $postmeta_name = $wpdb->prefix .'postmeta';
+            $postmeta_result = $wpdb->query("UPDATE $postmeta_name SET meta_value = REPLACE( meta_value, '$old_url', '$new_url') ");
+
+            echo '<div class="updated"><p><strong>替换成功！共替换文章内链'.$posts_result.'条、题图链接'.$postmeta_result.'条！</strong></p></div>';
+        }
     }
 
     // 若$options不为空数组，则更新数据
@@ -420,17 +467,16 @@ function uss_setting_page()
 
     $uss_update_file_name = esc_attr($uss_options['update_file_name']);
 
+    $uss_image_process = esc_attr($uss_options['image_process']);
+
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
     ?>
     <div class="wrap" style="margin: 10px;">
         <h1>又拍云 USS 设置 <span style="font-size: 13px;">当前版本：<?php echo USS_VERSION; ?></span></h1>
-        <p>优惠促销： <a href="https://go.qq52o.me/a/upyun" target="_blank">点我注册并完成实名认证，赠送 61 元免费代金券</a></p>
-        <p>如果觉得此插件对你有所帮助，不妨到 <a href="https://github.com/sy-records/upyun-uss-wordpress" target="_blank">Github</a> 上点个<code>Star</code>，<code>Watch</code>关注更新；
-        </p>
+        <p>活动推荐： <a href="https://go.qq52o.me/a/upyun" target="_blank">点我注册并完成实名认证，赠送 61 元免费代金券</a></p>
+        <p>如果觉得此插件对你有所帮助，不妨到 <a href="https://github.com/sy-records/upyun-uss-wordpress" target="_blank">Github</a> 上点个<code>Star</code>，<code>Watch</code>关注更新；<a href="//shang.qq.com/wpa/qunwpa?idkey=c7f4fbd7ef84184555dfb6377d8ae087b3d058d8eeae1ff8e2da25c00d53173f" target="_blank">欢迎加入云存储插件交流群,QQ群号:887595381</a>；</p>
         <hr/>
-        <form name="form1" method="post" action="<?php echo wp_nonce_url(
-            './options-general.php?page=' . USS_BASEFOLDER . '/upyun-uss-wordpress.php'
-        ); ?>">
+        <form name="form1" method="post" action="<?php echo wp_nonce_url('./options-general.php?page=' . USS_BASEFOLDER . '/upyun-uss-wordpress.php'); ?>">
             <table class="form-table">
                 <tr>
                     <th>
@@ -514,6 +560,20 @@ function uss_setting_page()
                 </tr>
                 <tr>
                     <th>
+                        <legend>图片处理</legend>
+                    </th>
+                    <td>
+                        <input type="text" name="image_process" value="<?php echo $uss_image_process; ?>" size="50" placeholder="请输入版本名称或处理参数，留空表示不处理"/>
+
+                        <p><b>版本名称：</b></p>
+                        <p>1）在 <a href="https://console.upyun.com/services/file/" target="_blank">云存储服务管理列表</a> 中对应服务的 <code>图片处理</code> 处添加。具体处理参数设置参考<a href="https://console.upyun.com/services/process/" target="_blank">又拍云文档</a>。</p>
+                        <p>2）填写时需要将<code>间隔标识符</code>和对应的<code>版本名称</code>或 <code>处理参数</code>进行拼接，例如：</p>
+                        <p><code>间隔标识符</code>为<code>!</code>(感叹号)，<code>版本名称</code>为<code>blog</code>，<code>处理参数</code>为 <code>	/watermark/text/VVBZVU4g5Y+I5ouN5LqR/align/center/color/52acd9/flip/left-right</code></p>
+                        <p>则填写为 <code>!blog</code> 或 <code>!/watermark/text/VVBZVU4g5Y+I5ouN5LqR/align/center/color/52acd9/flip/left-right</code></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th>
                         <legend>保存/更新选项</legend>
                     </th>
                     <td><input type="submit" name="submit" class="button button-primary" value="保存更改"/></td>
@@ -521,9 +581,7 @@ function uss_setting_page()
             </table>
             <input type="hidden" name="type" value="uss_set">
         </form>
-        <form name="form2" method="post" action="<?php echo wp_nonce_url(
-            './options-general.php?page=' . USS_BASEFOLDER . '/upyun-uss-wordpress.php'
-        ); ?>">
+        <form name="form2" method="post" action="<?php echo wp_nonce_url('./options-general.php?page=' . USS_BASEFOLDER . '/upyun-uss-wordpress.php'); ?>">
             <table class="form-table">
                 <tr>
                     <th>
@@ -538,9 +596,7 @@ function uss_setting_page()
             </table>
         </form>
         <hr>
-        <form name="form3" method="post" action="<?php echo wp_nonce_url(
-            './options-general.php?page=' . USS_BASEFOLDER . '/upyun-uss-wordpress.php'
-        ); ?>">
+        <form name="form3" method="post" action="<?php echo wp_nonce_url('./options-general.php?page=' . USS_BASEFOLDER . '/upyun-uss-wordpress.php'); ?>">
             <table class="form-table">
                 <tr>
                     <th>
@@ -548,6 +604,7 @@ function uss_setting_page()
                     </th>
                     <td>
                         <input type="text" name="old_url" size="50" placeholder="请输入要替换的旧域名"/>
+                        <p>如：<code>https://qq52o.me</code></p>
                     </td>
                 </tr>
                 <tr>
@@ -556,6 +613,7 @@ function uss_setting_page()
                     </th>
                     <td>
                         <input type="text" name="new_url" size="50" placeholder="请输入要替换的新域名"/>
+                        <p>如：USS加速域名<code>http://uss-sy-records.test.upcdn.net</code>或自定义域名<code>https://resources.qq52o.me</code></p>
                     </td>
                 </tr>
                 <tr>
@@ -565,7 +623,7 @@ function uss_setting_page()
                     <input type="hidden" name="type" value="upyun_uss_replace">
                     <td>
                         <input type="submit" name="submit" class="button button-secondary" value="开始替换"/>
-                        <p><b>注意：如果是首次替换，请注意备份！此功能只限于替换文章中使用的资源链接</b></p>
+                        <p><b>注意：如果是首次替换，请注意备份！此功能会替换文章以及设置的特色图片（题图）等使用的资源链接</b></p>
                     </td>
                 </tr>
             </table>
