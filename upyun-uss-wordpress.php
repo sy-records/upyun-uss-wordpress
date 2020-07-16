@@ -65,10 +65,10 @@ function uss_file_upload($object, $file, $no_local_file = false)
     if (!@file_exists($file)) {
         return false;
     }
-    $file = fopen($file, 'rb');
-    if ($file) {
+    $file_resource = fopen($file, 'rb');
+    if ($file_resource) {
         $client = uss_get_client();
-        $res = $client->write($object, $file);
+        $res = $client->write($object, $file_resource);
 //        var_dump($res);
         if ($no_local_file) {
             uss_delete_local_file($file);
