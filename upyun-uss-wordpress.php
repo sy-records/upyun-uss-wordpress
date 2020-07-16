@@ -3,7 +3,7 @@
 Plugin Name: USS Upyun
 Plugin URI: https://github.com/sy-records/upyun-uss-wordpress
 Description: 使用又拍云云存储USS作为附件存储空间。（This is a plugin that uses UPYUN Storage Service for attachments remote saving.）
-Version: 1.1.2
+Version: 1.1.3
 Author: 沈唁
 Author URI: https://qq52o.me
 License: Apache 2.0
@@ -11,7 +11,7 @@ License: Apache 2.0
 
 require_once 'sdk/vendor/autoload.php';
 
-define('USS_VERSION', "1.1.2");
+define('USS_VERSION', "1.1.3");
 define('USS_BASEFOLDER', plugin_basename(dirname(__FILE__)));
 
 use Upyun\Upyun;
