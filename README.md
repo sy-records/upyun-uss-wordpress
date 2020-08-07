@@ -2,10 +2,12 @@
 
 使用又拍云云存储 USS 作为附件存储空间的 WordPress 插件
 
-[![Latest Version](https://img.shields.io/github/release/sy-records/upyun-uss-wordpress.svg?style=flat-square)](https://github.com/sy-records/upyun-uss-wordpress/releases)
-[![License](https://img.shields.io/github/license/sy-records/upyun-uss-wordpress?color=blue)](LICENSE)
-[![contact-@Luffy](https://img.shields.io/badge/contact-@Luffy-blue.svg)](https://qq52o.me)
+[![Latest Version](https://img.shields.io/github/release/sy-records/upyun-uss-wordpress.svg)](https://github.com/sy-records/upyun-uss-wordpress/releases)
+[![License](https://img.shields.io/github/license/sy-records/upyun-uss-wordpress?color=red)](LICENSE)
+[![website](https://img.shields.io/badge/website-qq52o.me-blue)](https://qq52o.me)
 [![contributors](https://img.shields.io/github/contributors/sy-records/upyun-uss-wordpress?color=blue)](https://github.com/sy-records/upyun-uss-wordpress/graphs/contributors)
+[![plugin stars](https://img.shields.io/wordpress/plugin/stars/uss-upyun)](https://wordpress.org/plugins/uss-upyun/)
+[![plugin installs](https://img.shields.io/wordpress/plugin/installs/uss-upyun)](https://wordpress.org/plugins/uss-upyun/)
 
 ## 插件特色
 
