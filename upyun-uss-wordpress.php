@@ -3,7 +3,7 @@
 Plugin Name: USS Upyun
 Plugin URI: https://github.com/sy-records/upyun-uss-wordpress
 Description: 使用又拍云云存储USS作为附件存储空间。（This is a plugin that uses UPYUN Storage Service for attachments remote saving.）
-Version: 1.1.3
+Version: 1.2.0
 Author: 沈唁
 Author URI: https://qq52o.me
 License: Apache 2.0
@@ -11,7 +11,7 @@ License: Apache 2.0
 
 require_once 'sdk/vendor/autoload.php';
 
-define('USS_VERSION', "1.1.3");
+define('USS_VERSION', '1.2.0');
 define('USS_BASEFOLDER', plugin_basename(dirname(__FILE__)));
 
 use Upyun\Upyun;
@@ -52,12 +52,13 @@ function uss_get_bucket_name()
 }
 
 /**
- * 上传函数
+ * 上传
  *
- * @param  $object
- * @param  $file
- * @param  $opt
- * @return bool
+ * @param $object
+ * @param $file
+ * @param false $no_local_file
+ * @return false
+ * @throws Exception
  */
 function uss_file_upload($object, $file, $no_local_file = false)
 {
@@ -124,7 +125,7 @@ function uss_delete_local_file($file)
         }
 
         return true;
-    } catch (Exception $ex) {
+    } catch (\Exception $ex) {
         return false;
     }
 }
@@ -197,8 +198,20 @@ function uss_upload_thumbs($metadata)
     $uss_options = get_option('uss_options', true);
     if (isset($metadata['file'])) {
         // Maybe there is a problem with the old version
-        $object ='/' . get_option('upload_path') . '/' . $metadata['file'];
+
+        // Fix multi-site problems
         $file = $basedir . '/' . $metadata['file'];
+        $upload_path = get_option('upload_path');
+        if ($upload_path != '.') {
+            $path_array = explode($upload_path, $file);
+            if (isset($path_array[1]) && !empty($path_array[1])) {
+                $object = '/' . $upload_path . $path_array[1];
+            }
+        } else {
+            $object = '/' . $metadata['file'];
+            $file = str_replace('./', '', $file);
+        }
+
         uss_file_upload($object, $file, (esc_attr($uss_options['nolocalsaving']) == 'true'));
     }
     //上传所有缩略图
@@ -211,11 +224,10 @@ function uss_upload_thumbs($metadata)
         }
         //得到本地文件夹和远端文件夹
         $file_path = $basedir . '/' . dirname($metadata['file']) . '/';
-        if (get_option('upload_path') == '.') {
-            $file_path = str_replace("\\", '/', $file_path);
-            $file_path = str_replace(get_home_path() . "./", '', $file_path);
-        } else {
-            $file_path = str_replace("\\", '/', $file_path);
+        $file_path = str_replace("\\", '/', $file_path);
+
+        if ($upload_path == '.') {
+            $file_path = str_replace('./', '', $file_path);
         }
 
         $object_path = str_replace(get_home_path(), '', $file_path);
@@ -298,8 +310,13 @@ function uss_function_each(&$array)
     return $res;
 }
 
+/**
+ * @param $dir
+ * @return array
+ */
 function uss_read_dir_queue($dir)
 {
+    $dd = [];
     if (isset($dir)) {
         $files = array();
         $queue = array($dir);
@@ -319,17 +336,14 @@ function uss_read_dir_queue($dir)
             }
             closedir($handle);
         }
-        $i = '';
+        $upload_path = get_option('upload_path');
         foreach ($files as $v) {
-            $i++;
             if (!is_dir($v)) {
-                $dd[$i]['j'] = $v;
-                $dd[$i]['x'] = '/' . get_option('upload_path') . explode(get_option('upload_path'), $v)[1];
+                $dd[] = ['filepath' => $v, 'key' =>  '/' . $upload_path . explode($upload_path, $v)[1]];
             }
         }
-    } else {
-        $dd = '';
     }
+
     return $dd;
 }
 
@@ -407,13 +421,11 @@ function uss_setting_page()
     }
 
     if (!empty($_POST) and $_POST['type'] == 'upyun_uss_all') {
-        $synv = uss_read_dir_queue(get_home_path() . get_option('upload_path'));
-        $i = 0;
-        foreach ($synv as $k) {
-            $i++;
-            uss_file_upload($k['x'], $k['j']);
+        $sync = uss_read_dir_queue(get_home_path() . get_option('upload_path'));
+        foreach ($sync as $k) {
+            uss_file_upload($k['key'], $k['filepath']);
         }
-        echo '<div class="updated"><p><strong>本次操作成功同步' . $i . '个文件</strong></p></div>';
+        echo '<div class="updated"><p><strong>本次操作成功同步' . count($sync) . '个文件</strong></p></div>';
     }
 
     // 替换数据库链接

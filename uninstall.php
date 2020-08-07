@@ -11,7 +11,7 @@ $obs_upload_url_path = esc_attr($obs_options['upload_url_path']);
 
 //如果现在使用的是七牛的URL，则恢复原状
 if ($upload_url_path == $obs_upload_url_path) {
-    update_option('upload_url_path', "");
+    update_option('upload_url_path', '');
 }
 
 //移除配置
