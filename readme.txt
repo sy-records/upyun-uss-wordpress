@@ -65,7 +65,7 @@ QQ交流群：887595381
 = 1.2.0=
 * 优化同步文件逻辑
 * 修复多站点上传原图失败，缩略图正常问题
-* 升级sdk至3.5.0版本
+* <del>升级sdk至3.5.0版本</del> 升不了 https://github.com/sy-records/upyun-uss-wordpress/commit/b899c35df6796fe282bf8c840a5e1244a6cffe30
 
 = 1.1.3=
 * 修复删除本地文件失败
