@@ -165,14 +165,14 @@ function uss_upload_attachments($metadata)
     if (!in_array($metadata['type'], $image_mime_types)) {
         //生成object在uss中的存储路径
         if (get_option('upload_path') == '.') {
-            //如果含有“./”则去除之
             $metadata['file'] = str_replace("./", '', $metadata['file']);
         }
         $object = str_replace("\\", '/', $metadata['file']);
-        $object = str_replace(get_home_path(), '', $object);
+        $home_path = get_home_path();
+        $object = str_replace($home_path, '', $object);
 
         //在本地的存储路径
-        $file = get_home_path() . $object; //向上兼容，较早的WordPress版本上$metadata['file']存放的是相对路径
+        $file = $home_path . $object; //向上兼容，较早的WordPress版本上$metadata['file']存放的是相对路径
 
         //执行上传操作
         uss_file_upload('/' . $object, $file, uss_is_delete_local_file());
