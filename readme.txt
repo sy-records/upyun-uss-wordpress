@@ -5,7 +5,7 @@ Tags: USS, 又拍云, 对象存储, upyun, 云存储
 Requires at least: 4.2
 Tested up to: 5.5
 Requires PHP: 5.6.0
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: Apache 2.0
 License URI: http://www.apache.org/licenses/LICENSE-2.0.html
 
@@ -62,19 +62,22 @@ QQ交流群：887595381
 
 == Changelog ==
 
+= 1.2.1 =
+* 升级sdk，可能会有问题，有问题及时反馈。
+
 = 1.2.0=
 * 优化同步文件逻辑
 * 修复多站点上传原图失败，缩略图正常问题
 * <del>升级sdk至3.5.0版本</del> 升不了 https://github.com/sy-records/upyun-uss-wordpress/commit/b899c35df6796fe282bf8c840a5e1244a6cffe30
 
-= 1.1.3=
+= 1.1.3 =
 * 修复删除本地文件失败
 
-= 1.1.2=
+= 1.1.2 =
 * 增加图片处理功能
 * 替换数据库链接增加题图
 
-= 1.1.1=
+= 1.1.1 =
 * 修复设置页面版本号问题
 * 增加上传时自动重命名处理，支持MD5或时间戳+随机数两种方式
 
