@@ -3,7 +3,7 @@
 Plugin Name: USS Upyun
 Plugin URI: https://github.com/sy-records/upyun-uss-wordpress
 Description: 使用又拍云云存储USS作为附件存储空间。（This is a plugin that uses UPYUN Storage Service for attachments remote saving.）
-Version: 1.2.1
+Version: 1.2.2
 Author: 沈唁
 Author URI: https://qq52o.me
 License: Apache 2.0
@@ -11,7 +11,7 @@ License: Apache 2.0
 
 require_once 'sdk/vendor/autoload.php';
 
-define('USS_VERSION', '1.2.1');
+define('USS_VERSION', '1.2.2');
 define('USS_BASEFOLDER', plugin_basename(dirname(__FILE__)));
 
 use Upyun\Upyun;
@@ -258,9 +258,6 @@ if (substr_count($_SERVER['REQUEST_URI'], '/update.php') <= 0) {
 function uss_delete_remote_attachment($post_id)
 {
     $meta = wp_get_attachment_metadata($post_id);
-
-    $uss_options = get_option('uss_options', true);
-
     if (isset($meta['file'])) {
         // meta['file']的格式为 "2020/01/wp-bg.png"
         $upload_path = get_option('upload_path');
@@ -269,8 +266,10 @@ function uss_delete_remote_attachment($post_id)
         }
         $file_path = $upload_path . '/' . $meta['file'];
         uss_delete_uss_file(str_replace("\\", '/', $file_path));
-        $is_nothumb = (esc_attr($uss_options['nothumb']) == 'false');
-        if ($is_nothumb) {
+
+//        $uss_options = get_option('uss_options', true);
+//        $is_nothumb = (esc_attr($uss_options['nothumb']) == 'false');
+//        if ($is_nothumb) {
             // 删除缩略图
             if (isset($meta['sizes']) && count($meta['sizes']) > 0) {
                 foreach ($meta['sizes'] as $val) {
@@ -278,7 +277,7 @@ function uss_delete_remote_attachment($post_id)
                     uss_delete_uss_file(str_replace("\\", '/', $size_file));
                 }
             }
-        }
+//        }
     }
 }
 
