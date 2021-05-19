@@ -5,12 +5,12 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
     exit();
 }
 
-$obs_options = get_option('uss_options', true);
+$uss_options = get_option('uss_options', true);
 $upload_url_path = get_option('upload_url_path');
-$obs_upload_url_path = esc_attr($obs_options['upload_url_path']);
+$uss_upload_url_path = esc_attr($uss_options['upload_url_path']);
 
-//如果现在使用的是七牛的URL，则恢复原状
-if ($upload_url_path == $obs_upload_url_path) {
+//如果现在使用的是又拍云的URL，则恢复原状
+if ($upload_url_path == $uss_upload_url_path) {
     update_option('upload_url_path', '');
 }
 

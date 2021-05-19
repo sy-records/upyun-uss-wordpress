@@ -17,6 +17,10 @@ define('USS_BASEFOLDER', plugin_basename(dirname(__FILE__)));
 use Upyun\Upyun;
 use Upyun\Config;
 
+if (!function_exists('get_home_path')) {
+    require_once(ABSPATH . 'wp-admin/includes/file.php');
+}
+
 // 初始化选项
 register_activation_hook(__FILE__, 'uss_set_options');
 // 初始化选项
@@ -258,9 +262,10 @@ if (substr_count($_SERVER['REQUEST_URI'], '/update.php') <= 0) {
 function uss_delete_remote_attachment($post_id)
 {
     $meta = wp_get_attachment_metadata($post_id);
+    $upload_path = get_option('upload_path');
+    $uss_options = get_option('uss_options', true);
     if (isset($meta['file'])) {
         // meta['file']的格式为 "2020/01/wp-bg.png"
-        $upload_path = get_option('upload_path');
         if ($upload_path == '') {
             $upload_path = 'wp-content/uploads';
         }
@@ -278,6 +283,23 @@ function uss_delete_remote_attachment($post_id)
                 }
             }
 //        }
+    } else {
+        // 获取链接删除
+        $link = wp_get_attachment_url($post_id);
+        if ($link) {
+            if ($upload_path != '.') {
+                $file_info = explode($upload_path, $link);
+                if (isset($file_info[1])) {
+                    uss_delete_uss_file($upload_path . $file_info[1]);
+                }
+            } else {
+                $uss_upload_url = esc_attr($uss_options['upload_url_path']);
+                $file_info = explode($uss_upload_url, $link);
+                if (isset($file_info[1])) {
+                    uss_delete_uss_file($file_info[1]);
+                }
+            }
+        }
     }
 }
 
