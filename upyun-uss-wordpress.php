@@ -3,7 +3,7 @@
 Plugin Name: USS Upyun
 Plugin URI: https://github.com/sy-records/upyun-uss-wordpress
 Description: 使用又拍云云存储USS作为附件存储空间。（This is a plugin that uses UPYUN Storage Service for attachments remote saving.）
-Version: 1.2.3
+Version: 1.2.4
 Author: 沈唁
 Author URI: https://qq52o.me
 License: Apache 2.0
@@ -11,7 +11,7 @@ License: Apache 2.0
 
 require_once 'sdk/vendor/autoload.php';
 
-define('USS_VERSION', '1.2.3');
+define('USS_VERSION', '1.2.4');
 define('USS_BASEFOLDER', plugin_basename(dirname(__FILE__)));
 
 use Upyun\Upyun;
@@ -375,6 +375,7 @@ function uss_setting_content_img_process($content)
     if (!empty($option['image_process'])) {
         preg_match_all('/<img.*?(?: |\\t|\\r|\\n)?src=[\'"]?(.+?)[\'"]?(?:(?: |\\t|\\r|\\n)+.*?)?>/sim', $content, $images);
         if (!empty($images) && isset($images[1])) {
+            $images[1] = array_unique($images[1]);
             foreach ($images[1] as $item) {
                 if(strpos($item, $option['upload_url_path']) !== false){
                     $content = str_replace($item, $item . $option['image_process'], $content);
@@ -392,6 +393,7 @@ function uss_setting_post_thumbnail_img_process( $html, $post_id, $post_image_id
     if (!empty($option['image_process']) && has_post_thumbnail()) {
         preg_match_all('/<img.*?(?: |\\t|\\r|\\n)?src=[\'"]?(.+?)[\'"]?(?:(?: |\\t|\\r|\\n)+.*?)?>/sim', $html, $images);
         if (!empty($images) && isset($images[1])) {
+            $images[1] = array_unique($images[1]);
             foreach ($images[1] as $item) {
                 if(strpos($item, $option['upload_url_path']) !== false){
                     $html = str_replace($item, $item . $option['image_process'], $html);
