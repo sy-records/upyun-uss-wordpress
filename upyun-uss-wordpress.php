@@ -453,8 +453,8 @@ function uss_setting_page()
 
     // 替换数据库链接
     if (!empty($_POST) and $_POST['type'] == 'upyun_uss_replace') {
-        $oldurl = esc_url_raw($_POST['old_url']);
-        $newurl = esc_url_raw($_POST['new_url']);
+        $old_url = esc_url_raw($_POST['old_url']);
+        $new_url = esc_url_raw($_POST['new_url']);
 
         if (empty($oldurl) || empty($newurl)) {
             echo '<div class="error"><p><strong>替换域名不能为空。</strong></p></div>';
