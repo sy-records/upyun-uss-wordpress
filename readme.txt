@@ -3,7 +3,7 @@ Contributors: shenyanzhi
 Donate link: https://qq52o.me/sponsor.html
 Tags: USS, 又拍云, 对象存储, upyun, 云存储
 Requires at least: 4.2
-Tested up to: 6.2
+Tested up to: 6.3
 Requires PHP: 5.6.0
 Stable tag: 1.2.5
 License: Apache 2.0
