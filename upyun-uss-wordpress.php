@@ -3,7 +3,7 @@
 Plugin Name: USS Upyun
 Plugin URI: https://github.com/sy-records/upyun-uss-wordpress
 Description: 使用又拍云云存储USS作为附件存储空间。（This is a plugin that uses UPYUN Storage Service for attachments remote saving.）
-Version: 1.2.5
+Version: 1.3.0
 Author: 沈唁
 Author URI: https://qq52o.me
 License: Apache 2.0
@@ -11,7 +11,7 @@ License: Apache 2.0
 
 require_once 'sdk/vendor/autoload.php';
 
-define('USS_VERSION', '1.2.5');
+define('USS_VERSION', '1.3.0');
 define('USS_BASEFOLDER', plugin_basename(dirname(__FILE__)));
 
 use Upyun\Upyun;
@@ -27,14 +27,14 @@ register_activation_hook(__FILE__, 'uss_set_options');
 function uss_set_options()
 {
     $options = array(
-        'bucket' => "",
-        'OperatorName' => "",
-        'OperatorPwd' => "",
-        'nothumb' => "false", // 是否上传缩略图
-        'nolocalsaving' => "false", // 是否保留本地备份
-        'upload_url_path' => "", // URL前缀
-        'update_file_name' => "false", // 是否重命名文件名
-        'image_process' => "", // 图片处理 https://console.upyun.com/services/process/
+        'bucket' => '',
+        'OperatorName' => '',
+        'OperatorPwd' => '',
+        'nothumb' => 'false', // 是否上传缩略图
+        'nolocalsaving' => 'false', // 是否保留本地备份
+        'upload_url_path' => '', // URL前缀
+        'update_file_name' => 'false', // 是否重命名文件名
+        'image_process' => '', // 图片处理 https://console.upyun.com/services/process/
     );
     add_option('uss_options', $options, '', 'yes');
 }

@@ -8,6 +8,7 @@
 [![contributors](https://img.shields.io/github/contributors/sy-records/upyun-uss-wordpress?color=blue)](https://github.com/sy-records/upyun-uss-wordpress/graphs/contributors)
 [![plugin stars](https://img.shields.io/wordpress/plugin/stars/uss-upyun)](https://wordpress.org/plugins/uss-upyun/)
 [![plugin installs](https://img.shields.io/wordpress/plugin/installs/uss-upyun)](https://wordpress.org/plugins/uss-upyun/)
+[![Deploy to WordPress.org](https://github.com/sy-records/upyun-uss-wordpress/actions/workflows/deploy.yml/badge.svg)](https://github.com/sy-records/upyun-uss-wordpress/actions/workflows/deploy.yml)
 
 ## 插件特色
 
@@ -28,9 +29,9 @@ WordPress 后台安装插件页面搜索`USS Upyun`，点击安装
 
 ### 下载源码
 
-从 Github 下载源码，通过 WordPress 后台上传安装，或者直接将源码上传到 WordPress 插件目录`wp-content/plugins`，然后在后台启用
+从 GitHub 下载源码，通过 WordPress 后台上传安装，或者直接将源码上传到 WordPress 插件目录`wp-content/plugins`，然后在后台启用
 
-Github 下载节点：[https://github.com/sy-records/upyun-uss-wordpress/releases/latest](https://github.com/sy-records/upyun-uss-wordpress/releases/latest)
+GitHub 下载节点：[https://github.com/sy-records/upyun-uss-wordpress/releases/latest](https://github.com/sy-records/upyun-uss-wordpress/releases/latest)
 
 ## 修改配置
 

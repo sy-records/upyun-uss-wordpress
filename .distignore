@@ -1,0 +1,9 @@
+*.github
+*.gitignore
+*.gitattributes
+*.yml
+*examples
+*tests
+/.git
+/.distignore
+/sdk/composer.lock
