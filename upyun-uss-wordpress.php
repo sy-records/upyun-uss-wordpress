@@ -508,8 +508,8 @@ function uss_setting_page()
     ?>
     <div class="wrap" style="margin: 10px;">
         <h1>又拍云 USS 设置 <span style="font-size: 13px;">当前版本：<?php echo USS_VERSION; ?></span></h1>
-        <p>活动推荐： <a href="https://go.qq52o.me/a/upyun" target="_blank">点我注册并完成实名认证，赠送 61 元免费代金券</a></p>
-        <p>如果觉得此插件对你有所帮助，不妨到 <a href="https://github.com/sy-records/upyun-uss-wordpress" target="_blank">Github</a> 上点个<code>Star</code>，<code>Watch</code>关注更新；<a href="//shang.qq.com/wpa/qunwpa?idkey=c7f4fbd7ef84184555dfb6377d8ae087b3d058d8eeae1ff8e2da25c00d53173f" target="_blank">欢迎加入云存储插件交流群,QQ群号:887595381</a>；</p>
+        <p>活动推荐：<a href="https://go.qq52o.me/a/upyun" target="_blank">点我注册并完成实名认证，赠送 61 元免费代金券</a></p>
+        <p>如果觉得此插件对你有所帮助，不妨到 <a href="https://github.com/sy-records/upyun-uss-wordpress" target="_blank">GitHub</a> 上点个<code>Star</code>，<code>Watch</code>关注更新；<a href="https://go.qq52o.me/qm/ccs" target="_blank">欢迎加入云存储插件交流群，QQ群号：887595381</a>；</p>
         <hr/>
         <form name="form1" method="post" action="<?php echo wp_nonce_url('./options-general.php?page=' . USS_BASEFOLDER . '/upyun-uss-wordpress.php'); ?>">
             <table class="form-table">
@@ -603,7 +603,7 @@ function uss_setting_page()
                         <p><b>版本名称：</b></p>
                         <p>1）在 <a href="https://console.upyun.com/services/file/" target="_blank">云存储服务管理列表</a> 中对应服务的 <code>图片处理</code> 处添加。具体处理参数设置参考<a href="https://console.upyun.com/services/process/" target="_blank">又拍云文档</a>。</p>
                         <p>2）填写时需要将<code>间隔标识符</code>和对应的<code>版本名称</code>或 <code>处理参数</code>进行拼接，例如：</p>
-                        <p><code>间隔标识符</code>为<code>!</code>(感叹号)，<code>版本名称</code>为<code>blog</code>，<code>处理参数</code>为 <code>	/watermark/text/VVBZVU4g5Y+I5ouN5LqR/align/center/color/52acd9/flip/left-right</code></p>
+                        <p><code>间隔标识符</code>为<code>!</code>(感叹号)，<code>版本名称</code>为<code>blog</code>，<code>处理参数</code>为<code>/watermark/text/VVBZVU4g5Y+I5ouN5LqR/align/center/color/52acd9/flip/left-right</code></p>
                         <p>则填写为 <code>!blog</code> 或 <code>!/watermark/text/VVBZVU4g5Y+I5ouN5LqR/align/center/color/52acd9/flip/left-right</code></p>
                     </td>
                 </tr>
