@@ -3,7 +3,7 @@
 Plugin Name: USS Upyun
 Plugin URI: https://github.com/sy-records/upyun-uss-wordpress
 Description: 使用又拍云云存储USS作为附件存储空间。（This is a plugin that uses UPYUN Storage Service for attachments remote saving.）
-Version: 1.3.0
+Version: 1.4.0
 Author: 沈唁
 Author URI: https://qq52o.me
 License: Apache 2.0
@@ -11,7 +11,7 @@ License: Apache 2.0
 
 require_once 'sdk/vendor/autoload.php';
 
-define('USS_VERSION', '1.3.0');
+define('USS_VERSION', '1.4.0');
 define('USS_BASEFOLDER', plugin_basename(dirname(__FILE__)));
 
 use Upyun\Upyun;
@@ -26,7 +26,7 @@ register_activation_hook(__FILE__, 'uss_set_options');
 // 初始化选项
 function uss_set_options()
 {
-    $options = array(
+    $options = [
         'bucket' => '',
         'OperatorName' => '',
         'OperatorPwd' => '',
@@ -35,7 +35,7 @@ function uss_set_options()
         'upload_url_path' => '', // URL前缀
         'update_file_name' => 'false', // 是否重命名文件名
         'image_process' => '', // 图片处理 https://console.upyun.com/services/process/
-    );
+    ];
     add_option('uss_options', $options, '', 'yes');
 }
 
@@ -49,19 +49,13 @@ function uss_get_client()
     return new Upyun($serviceConfig);
 }
 
-function uss_get_bucket_name()
-{
-    $uss_opt = get_option('uss_options', true);
-    return esc_attr($uss_opt['bucket']);
-}
-
 /**
  * 上传
  *
  * @param $object
  * @param $file
  * @param false $no_local_file
- * @return false
+ * @return false|void
  * @throws Exception
  */
 function uss_file_upload($object, $file, $no_local_file = false)
@@ -70,16 +64,19 @@ function uss_file_upload($object, $file, $no_local_file = false)
     if (!@file_exists($file)) {
         return false;
     }
+
     $file_resource = fopen($file, 'rb');
-    if ($file_resource) {
-        $client = uss_get_client();
-        $res = $client->write($object, $file_resource);
-//        var_dump($res);
-        if ($no_local_file) {
-            uss_delete_local_file($file);
-        }
-    } else {
+    if (!$file_resource) {
         return false;
+    }
+
+    $client = uss_get_client();
+    $client->write($object, $file_resource);
+    if (is_resource($file_resource)) {
+        fclose($file);
+    }
+    if ($no_local_file) {
+        uss_delete_local_file($file);
     }
 }
 
@@ -87,16 +84,16 @@ function uss_sanitize_file_name($filename)
 {
     $uss_options = get_option('uss_options');
     switch ($uss_options['update_file_name']) {
-        case "md5":
-            return  md5($filename) . "." . pathinfo($filename, PATHINFO_EXTENSION);
-        case "time":
-            return date("YmdHis", current_time('timestamp'))  . mt_rand(100, 999) . "." . pathinfo($filename, PATHINFO_EXTENSION);
+        case 'md5':
+            return  md5($filename) . '.' . pathinfo($filename, PATHINFO_EXTENSION);
+        case 'time':
+            return date('YmdHis', current_time('timestamp')) . mt_rand(100, 999) . '.' . pathinfo($filename, PATHINFO_EXTENSION);
         default:
             return $filename;
     }
 }
 
-add_filter( 'sanitize_file_name', 'uss_sanitize_file_name', 10, 1 );
+add_filter('sanitize_file_name', 'uss_sanitize_file_name', 10, 1);
 
 /**
  * 是否需要删除本地文件
@@ -106,7 +103,7 @@ add_filter( 'sanitize_file_name', 'uss_sanitize_file_name', 10, 1 );
 function uss_is_delete_local_file()
 {
     $uss_options = get_option('uss_options', true);
-    return (esc_attr($uss_options['nolocalsaving']) == 'true');
+    return esc_attr($uss_options['nolocalsaving']) == 'true';
 }
 
 /**
@@ -137,32 +134,47 @@ function uss_delete_local_file($file)
 /**
  * 删除uss中的文件
  * @param $file
- * @return bool
+ * @return void
  */
 function uss_delete_uss_file($file)
 {
     $client = uss_get_client();
-    $res = $client->delete($file, true);
-//    var_dump($res);
+    $client->delete($file, true);
+}
+
+/**
+ * 批量删除uss中的文件
+ *
+ * @param array $files
+ * @return void
+ */
+function uss_delete_uss_files($files)
+{
+    $client = uss_get_client();
+    foreach ($files as $file) {
+        $client->delete(str_replace(["\\", './'], ['/', ''], $file), true);
+    }
 }
 
 /**
  * 上传附件（包括图片的原图）
  *
- * @param  $metadata
- * @return array()
+ * @param array $metadata
+ * @return array
  */
 function uss_upload_attachments($metadata)
 {
     $mime_types = get_allowed_mime_types();
-    $image_mime_types = array(
+    $image_mime_types = [
         $mime_types['jpg|jpeg|jpe'],
         $mime_types['gif'],
         $mime_types['png'],
         $mime_types['bmp'],
         $mime_types['tiff|tif'],
+        $mime_types['webp'],
         $mime_types['ico'],
-    );
+        $mime_types['heic'],
+    ];
 
     // 例如mp4等格式 上传后根据配置选择是否删除 删除后媒体库会显示默认图片 点开内容是正常的
     // 图片在缩略图处理
@@ -185,74 +197,94 @@ function uss_upload_attachments($metadata)
     return $metadata;
 }
 
-//避免上传插件/主题时出现同步到uss的情况
-if (substr_count($_SERVER['REQUEST_URI'], '/update.php') <= 0) {
-    add_filter('wp_handle_upload', 'uss_upload_attachments', 50);
-}
-
 /**
  * 上传图片的缩略图
  */
 function uss_upload_thumbs($metadata)
 {
+    if (empty($metadata['file'])) {
+        return $metadata;
+    }
+
     //获取上传路径
     $wp_uploads = wp_upload_dir();
     $basedir = $wp_uploads['basedir'];
+    $upload_path = get_option('upload_path');
     //获取uss插件的配置信息
     $uss_options = get_option('uss_options', true);
-    if (isset($metadata['file'])) {
-        // Maybe there is a problem with the old version
+    $no_local_file = esc_attr($uss_options['nolocalsaving']) == 'true';
+    $no_thumb = esc_attr($uss_options['nothumb']) == 'true';
 
-        // Fix multi-site problems
-        $file = $basedir . '/' . $metadata['file'];
-        $upload_path = get_option('upload_path');
-        if ($upload_path != '.') {
-            $path_array = explode($upload_path, $file);
-            if (isset($path_array[1]) && !empty($path_array[1])) {
-                $object = '/' . $upload_path . $path_array[1];
-            }
-        } else {
-            $object = '/' . $metadata['file'];
-            $file = str_replace('./', '', $file);
+    // Maybe there is a problem with the old version
+    // Fix multi-site problems
+    $file = $basedir . '/' . $metadata['file'];
+    if ($upload_path != '.') {
+        $path_array = explode($upload_path, $file);
+        if (isset($path_array[1]) && !empty($path_array[1])) {
+            $object = '/' . $upload_path . $path_array[1];
         }
-
-        uss_file_upload($object, $file, (esc_attr($uss_options['nolocalsaving']) == 'true'));
+    } else {
+        $object = '/' . $metadata['file'];
+        $file = str_replace('./', '', $file);
     }
+
+    uss_file_upload($object, $file, $no_local_file);
+
+    //得到本地文件夹和远端文件夹
+    $dirname = dirname($metadata['file']);
+    $file_path = $dirname != '.' ? "{$basedir}/{$dirname}/" : "{$basedir}/";
+    $file_path = str_replace("\\", '/', $file_path);
+    if ($upload_path == '.') {
+        $file_path = str_replace('./', '', $file_path);
+    }
+    $object_path = str_replace(get_home_path(), '', $file_path);
+
+    if (!empty($metadata['original_image'])) {
+        uss_file_upload("/{$object_path}{$metadata['original_image']}", "{$file_path}{$metadata['original_image']}", $no_local_file);
+    }
+
+    //如果禁止上传缩略图，就不用继续执行了
+    if ($no_thumb) {
+        return $metadata;
+    }
+
     //上传所有缩略图
-    if (isset($metadata['sizes']) && count($metadata['sizes']) > 0) {
-        //是否需要上传缩略图
-        $nothumb = (esc_attr($uss_options['nothumb']) == 'true');
-        //如果禁止上传缩略图，就不用继续执行了
-        if ($nothumb) {
-            return $metadata;
-        }
-        //得到本地文件夹和远端文件夹
-        $file_path = $basedir . '/' . dirname($metadata['file']) . '/';
-        $file_path = str_replace("\\", '/', $file_path);
-
-        if ($upload_path == '.') {
-            $file_path = str_replace('./', '', $file_path);
-        }
-
-        $object_path = str_replace(get_home_path(), '', $file_path);
-
-        //there may be duplicated filenames,so ....
+    if (!empty($metadata['sizes'])) {
         foreach ($metadata['sizes'] as $val) {
-            //生成object在uss中的存储路径
             $object = '/' . $object_path . $val['file'];
-            //生成本地存储路径
             $file = $file_path . $val['file'];
 
-            //执行上传操作
-            uss_file_upload($object, $file, (esc_attr($uss_options['nolocalsaving']) == 'true'));
+            uss_file_upload($object, $file, $no_local_file);
         }
     }
+
     return $metadata;
+}
+
+/**
+ * @param $override
+ * @return mixed
+ */
+function uss_save_image_editor_file($override)
+{
+    add_filter('wp_update_attachment_metadata', 'uss_image_editor_file_do');
+    return $override;
+}
+
+/**
+ * @param $metadata
+ * @return mixed
+ */
+function uss_image_editor_file_do($metadata)
+{
+    return uss_upload_thumbs($metadata);
 }
 
 //避免上传插件/主题时出现同步到uss的情况
 if (substr_count($_SERVER['REQUEST_URI'], '/update.php') <= 0) {
+    add_filter('wp_handle_upload', 'uss_upload_attachments', 50);
     add_filter('wp_generate_attachment_metadata', 'uss_upload_thumbs', 100);
+    add_filter('wp_save_image_editor_file', 'uss_save_image_editor_file', 101);
 }
 
 /**
@@ -263,26 +295,38 @@ function uss_delete_remote_attachment($post_id)
 {
     $meta = wp_get_attachment_metadata($post_id);
     $upload_path = get_option('upload_path');
-    $uss_options = get_option('uss_options', true);
-    if (isset($meta['file'])) {
-        // meta['file']的格式为 "2020/01/wp-bg.png"
-        if ($upload_path == '') {
-            $upload_path = 'wp-content/uploads';
-        }
-        $file_path = $upload_path . '/' . $meta['file'];
-        uss_delete_uss_file(str_replace("\\", '/', $file_path));
+    if ($upload_path == '') {
+        $upload_path = 'wp-content/uploads';
+    }
 
-//        $uss_options = get_option('uss_options', true);
-//        $is_nothumb = (esc_attr($uss_options['nothumb']) == 'false');
-//        if ($is_nothumb) {
-            // 删除缩略图
-            if (isset($meta['sizes']) && count($meta['sizes']) > 0) {
-                foreach ($meta['sizes'] as $val) {
-                    $size_file = dirname($file_path) . '/' . $val['file'];
-                    uss_delete_uss_file(str_replace("\\", '/', $size_file));
-                }
+    if (!empty($meta['file'])) {
+        $deleteObjects = [];
+        // meta['file']的格式为 "2020/01/wp-bg.png"
+        $file_path = $upload_path . '/' . $meta['file'];
+        $deleteObjects[] = $file_path;
+
+        $dirname = dirname($file_path) . '/';
+
+        // 超大图原图
+        if (!empty($meta['original_image'])) {
+            $deleteObjects[] = $dirname . $meta['original_image'];
+        }
+
+        // 删除缩略图
+        if (!empty($meta['sizes'])) {
+            foreach ($meta['sizes'] as $val) {
+                $deleteObjects[] = $dirname . $val['file'];
             }
-//        }
+        }
+
+        $backup_sizes = get_post_meta($post_id, '_wp_attachment_backup_sizes', true);
+        if (is_array($backup_sizes)) {
+            foreach ($backup_sizes as $size) {
+                $deleteObjects[] = $dirname . $size['file'];
+            }
+        }
+
+        uss_delete_uss_files($deleteObjects);
     } else {
         // 获取链接删除
         $link = wp_get_attachment_url($post_id);
@@ -293,6 +337,7 @@ function uss_delete_remote_attachment($post_id)
                     uss_delete_uss_file($upload_path . $file_info[1]);
                 }
             } else {
+                $uss_options = get_option('uss_options', true);
                 $uss_upload_url = esc_attr($uss_options['upload_url_path']);
                 $file_info = explode($uss_upload_url, $link);
                 if (isset($file_info[1])) {
@@ -309,98 +354,114 @@ add_action('delete_attachment', 'uss_delete_remote_attachment');
 function uss_modefiy_img_url($url, $post_id)
 {
     // 移除 ./ 和 项目根路径
-    $url = str_replace(array('./', get_home_path()), array('', ''), $url);
-    return $url;
+    return str_replace(['./', get_home_path()], '', $url);
 }
 
 if (get_option('upload_path') == '.') {
     add_filter('wp_get_attachment_url', 'uss_modefiy_img_url', 30, 2);
 }
 
-function uss_function_each(&$array)
-{
-    $res = array();
-    $key = key($array);
-    if ($key !== null) {
-        next($array);
-        $res[1] = $res['value'] = $array[$key];
-        $res[0] = $res['key'] = $key;
-    } else {
-        $res = false;
-    }
-    return $res;
-}
-
 /**
- * @param $dir
+ * @param string $homePath
+ * @param string $uploadPath
  * @return array
  */
-function uss_read_dir_queue($dir)
+function uss_read_dir_queue($homePath, $uploadPath)
 {
-    $dd = [];
-    if (isset($dir)) {
-        $files = array();
-        $queue = array($dir);
-        while ($data = uss_function_each($queue)) {
-            $path = $data['value'];
-            if (is_dir($path) && $handle = opendir($path)) {
-                while ($file = readdir($handle)) {
-                    if ($file == '.' || $file == '..') {
-                        continue;
-                    }
-                    $files[] = $real_path = $path . '/' . $file;
-                    if (is_dir($real_path)) {
-                        $queue[] = $real_path;
-                    }
-                    //echo explode(get_option('upload_path'),$path)[1];
-                }
-            }
-            closedir($handle);
-        }
-        $upload_path = get_option('upload_path');
-        foreach ($files as $v) {
-            if (!is_dir($v)) {
-                $dd[] = ['filepath' => $v, 'key' =>  '/' . $upload_path . explode($upload_path, $v)[1]];
+    $dir = $homePath . $uploadPath;
+    $dirsToProcess = new SplQueue();
+    $dirsToProcess->enqueue([$dir, '']);
+    $foundFiles = [];
+
+    while (!$dirsToProcess->isEmpty()) {
+        list($currentDir, $relativeDir) = $dirsToProcess->dequeue();
+
+        foreach (new DirectoryIterator($currentDir) as $fileInfo) {
+            if ($fileInfo->isDot()) continue;
+
+            $filepath = $fileInfo->getRealPath();
+
+            // Compute the relative path of the file/directory with respect to upload path
+            $currentRelativeDir = "{$relativeDir}/{$fileInfo->getFilename()}";
+
+            if ($fileInfo->isDir()) {
+                $dirsToProcess->enqueue([$filepath, $currentRelativeDir]);
+            } else {
+                // Add file path and key to the result array
+                $foundFiles[] = [
+                    'filepath' => $filepath,
+                    'key' => '/' . $uploadPath . $currentRelativeDir
+                ];
             }
         }
     }
 
-    return $dd;
+    return $foundFiles;
 }
 
 add_filter('the_content', 'uss_setting_content_img_process');
+add_filter('post_thumbnail_html', 'uss_setting_post_thumbnail_img_process', 10, 3);
+add_filter('wp_calculate_image_srcset', 'uss_custom_image_srcset', 10, 5);
+
+function uss_custom_image_srcset($sources, $size_array, $image_src, $image_meta, $attachment_id)
+{
+    $option = get_option('uss_options');
+    $style = !empty($option['image_process']) ? esc_attr($option['image_process']) : '';
+    $upload_url_path = esc_attr($option['upload_url_path']);
+    if (empty($style)) {
+        return $sources;
+    }
+
+    foreach ($sources as $index => $source) {
+        if (strpos($source['url'], $upload_url_path) !== false && strpos($source['url'], $style) === false) {
+            $sources[$index]['url'] .= $style;
+        }
+    }
+
+    return $sources;
+}
+
 function uss_setting_content_img_process($content)
 {
-    $option = get_option("uss_options");
-    if (!empty($option['image_process'])) {
+    $option = get_option('uss_options');
+    $style = esc_attr($option['image_process']);
+    $upload_url_path = esc_attr($option['upload_url_path']);
+    if (!empty($style)) {
         preg_match_all('/<img.*?(?: |\\t|\\r|\\n)?src=[\'"]?(.+?)[\'"]?(?:(?: |\\t|\\r|\\n)+.*?)?>/sim', $content, $images);
         if (!empty($images) && isset($images[1])) {
             $images[1] = array_unique($images[1]);
             foreach ($images[1] as $item) {
-                if(strpos($item, $option['upload_url_path']) !== false){
-                    $content = str_replace($item, $item . $option['image_process'], $content);
+                if (strpos($item, $upload_url_path) !== false && strpos($item, $style) === false) {
+                    $content = str_replace($item, $item . $style, $content);
                 }
             }
+
+            $content = str_replace($style . $style, $style, $content);
         }
     }
+
     return $content;
 }
 
-add_filter('post_thumbnail_html', 'uss_setting_post_thumbnail_img_process', 10, 3);
-function uss_setting_post_thumbnail_img_process( $html, $post_id, $post_image_id )
+function uss_setting_post_thumbnail_img_process($html, $post_id, $post_image_id)
 {
-    $option = get_option("uss_options");
-    if (!empty($option['image_process']) && has_post_thumbnail()) {
+    $option = get_option('uss_options');
+    $style = esc_attr($option['image_process']);
+    $upload_url_path = esc_attr($option['upload_url_path']);
+    if (!empty($style) && has_post_thumbnail()) {
         preg_match_all('/<img.*?(?: |\\t|\\r|\\n)?src=[\'"]?(.+?)[\'"]?(?:(?: |\\t|\\r|\\n)+.*?)?>/sim', $html, $images);
         if (!empty($images) && isset($images[1])) {
             $images[1] = array_unique($images[1]);
             foreach ($images[1] as $item) {
-                if(strpos($item, $option['upload_url_path']) !== false){
-                    $html = str_replace($item, $item . $option['image_process'], $html);
+                if (strpos($item, $upload_url_path) !== false && strpos($item, $style) === false) {
+                    $html = str_replace($item, $item . $style, $html);
                 }
             }
+
+            $html = str_replace($style . $style, $style, $html);
         }
     }
+
     return $html;
 }
 
@@ -419,7 +480,7 @@ add_filter('plugin_action_links', 'uss_plugin_action_links', 10, 2);
 // 在导航栏“设置”中添加条目
 function uss_add_setting_page()
 {
-    add_options_page('又拍云USS设置', '又拍云USS设置', 'manage_options', __FILE__, 'uss_setting_page');
+    add_options_page('又拍云 USS', '又拍云 USS', 'manage_options', __FILE__, 'uss_setting_page');
 }
 
 add_action('admin_menu', 'uss_add_setting_page');
@@ -430,7 +491,7 @@ function uss_setting_page()
     if (!current_user_can('manage_options')) {
         wp_die('Insufficient privileges!');
     }
-    $options = array();
+    $options = [];
     if (!empty($_POST) and $_POST['type'] == 'uss_set') {
         $options['bucket'] = isset($_POST['bucket']) ? sanitize_text_field($_POST['bucket']) : '';
         $options['OperatorName'] = isset($_POST['OperatorName']) ? sanitize_text_field($_POST['OperatorName']) : '';
@@ -444,11 +505,11 @@ function uss_setting_page()
     }
 
     if (!empty($_POST) and $_POST['type'] == 'upyun_uss_all') {
-        $sync = uss_read_dir_queue(get_home_path() . get_option('upload_path'));
-        foreach ($sync as $k) {
-            uss_file_upload($k['key'], $k['filepath']);
+        $files = uss_read_dir_queue(get_home_path(), get_option('upload_path'));
+        foreach ($files as $file) {
+            uss_file_upload($file['key'], $file['filepath']);
         }
-        echo '<div class="updated"><p><strong>本次操作成功同步' . count($sync) . '个文件</strong></p></div>';
+        echo '<div class="updated"><p><strong>本次操作成功同步' . count($files) . '个文件</strong></p></div>';
     }
 
     // 替换数据库链接
@@ -474,7 +535,7 @@ function uss_setting_page()
     }
 
     // 若$options不为空数组，则更新数据
-    if ($options !== array()) {
+    if ($options !== []) {
         //更新数据库
         update_option('uss_options', $options);
 
@@ -495,23 +556,23 @@ function uss_setting_page()
     $uss_OperatorPwd = esc_attr($uss_options['OperatorPwd']);
 
     $uss_nothumb = esc_attr($uss_options['nothumb']);
-    $uss_nothumb = ($uss_nothumb == 'true');
+    $uss_nothumb = $uss_nothumb == 'true';
 
     $uss_nolocalsaving = esc_attr($uss_options['nolocalsaving']);
-    $uss_nolocalsaving = ($uss_nolocalsaving == 'true');
+    $uss_nolocalsaving = $uss_nolocalsaving == 'true';
 
     $uss_update_file_name = esc_attr($uss_options['update_file_name']);
 
     $uss_image_process = esc_attr($uss_options['image_process']);
 
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? 'https://' : 'http://';
     ?>
     <div class="wrap" style="margin: 10px;">
-        <h1>又拍云 USS 设置 <span style="font-size: 13px;">当前版本：<?php echo USS_VERSION; ?></span></h1>
+        <h1>又拍云 USS <span style="font-size: 13px;">当前版本：<?php echo USS_VERSION; ?></span></h1>
         <p>活动推荐：<a href="https://go.qq52o.me/a/upyun" target="_blank">点我注册并完成实名认证，赠送 61 元免费代金券</a></p>
         <p>如果觉得此插件对你有所帮助，不妨到 <a href="https://github.com/sy-records/upyun-uss-wordpress" target="_blank">GitHub</a> 上点个<code>Star</code>，<code>Watch</code>关注更新；<a href="https://go.qq52o.me/qm/ccs" target="_blank">欢迎加入云存储插件交流群，QQ群号：887595381</a>；</p>
         <hr/>
-        <form name="form1" method="post" action="<?php echo wp_nonce_url('./options-general.php?page=' . USS_BASEFOLDER . '/upyun-uss-wordpress.php'); ?>">
+        <form method="post">
             <table class="form-table">
                 <tr>
                     <th>
@@ -533,7 +594,7 @@ function uss_setting_page()
                         <legend>密码</legend>
                     </th>
                     <td>
-                        <input type="text" name="OperatorPwd" value="<?php echo $uss_OperatorPwd; ?>" size="50" placeholder="OperatorPwd"/>
+                        <input type="password" name="OperatorPwd" value="<?php echo $uss_OperatorPwd; ?>" size="50" placeholder="OperatorPwd"/>
                     </td>
                 </tr>
                 <tr>
@@ -611,12 +672,12 @@ function uss_setting_page()
                     <th>
                         <legend>保存/更新选项</legend>
                     </th>
-                    <td><input type="submit" name="submit" class="button button-primary" value="保存更改"/></td>
+                    <td><input type="submit" class="button button-primary" value="保存更改"/></td>
                 </tr>
             </table>
             <input type="hidden" name="type" value="uss_set">
         </form>
-        <form name="form2" method="post" action="<?php echo wp_nonce_url('./options-general.php?page=' . USS_BASEFOLDER . '/upyun-uss-wordpress.php'); ?>">
+        <form method="post">
             <table class="form-table">
                 <tr>
                     <th>
@@ -624,14 +685,14 @@ function uss_setting_page()
                     </th>
                     <input type="hidden" name="type" value="upyun_uss_all">
                     <td>
-                        <input type="submit" name="submit" class="button button-secondary" value="开始同步"/>
+                        <input type="submit" class="button button-secondary" value="开始同步"/>
                         <p><b>注意：如果是首次同步，执行时间将会十分十分长（根据你的历史附件数量），有可能会因执行时间过长，页面显示超时或者报错。<br> 所以，建议那些几千上万附件的大神们，考虑官方的 <a target="_blank" rel="nofollow" href="https://help.upyun.com/knowledge-base/developer_tools/">同步工具</a></b></p>
                     </td>
                 </tr>
             </table>
         </form>
         <hr>
-        <form name="form3" method="post" action="<?php echo wp_nonce_url('./options-general.php?page=' . USS_BASEFOLDER . '/upyun-uss-wordpress.php'); ?>">
+        <form method="post">
             <table class="form-table">
                 <tr>
                     <th>
@@ -657,7 +718,7 @@ function uss_setting_page()
                     </th>
                     <input type="hidden" name="type" value="upyun_uss_replace">
                     <td>
-                        <input type="submit" name="submit" class="button button-secondary" value="开始替换"/>
+                        <input type="submit" class="button button-secondary" value="开始替换"/>
                         <p><b>注意：如果是首次替换，请注意备份！此功能会替换文章以及设置的特色图片（题图）等使用的资源链接</b></p>
                     </td>
                 </tr>
