@@ -7,3 +7,4 @@
 /.git
 /.distignore
 /sdk/composer.lock
+/.wordpress-org
