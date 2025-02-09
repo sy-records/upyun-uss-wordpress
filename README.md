@@ -10,6 +10,8 @@
 [![plugin installs](https://img.shields.io/wordpress/plugin/installs/uss-upyun)](https://wordpress.org/plugins/uss-upyun/)
 [![Deploy to WordPress.org](https://github.com/sy-records/upyun-uss-wordpress/actions/workflows/deploy.yml/badge.svg)](https://github.com/sy-records/upyun-uss-wordpress/actions/workflows/deploy.yml)
 
+> 使用 WordPress Playground 在线预览 [OSS Aliyun](https://wordpress.org/plugins/uss-upyun/?preview=1) 插件
+
 ## 插件特色
 
 * [x] 可配置是否上传缩略图和是否保留本地备份
@@ -20,6 +22,7 @@
 * [x] 支持同步历史附件到又拍云云存储USS
 * [x] 支持上传时自动重命名文件（MD5或时间戳+随机数两种方式）
 * [x] 支持设置图片处理
+* [x] 支持多站点
 
 ## 安装
 
@@ -40,6 +43,6 @@ GitHub 下载节点：[https://github.com/sy-records/upyun-uss-wordpress/release
 
 ## 插件截图
 
-![设置页面](screenshot-1.png)
+![设置页面](.wordpress-org/screenshot-1.png)
 
-![update-wordpress-posts-photos.png](screenshot-2.png)
+![更新数据库链接](.wordpress-org/screenshot-2.png)

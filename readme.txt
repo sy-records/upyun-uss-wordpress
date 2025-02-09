@@ -9,11 +9,11 @@ Stable tag: 1.4.0
 License: Apache 2.0
 License URI: http://www.apache.org/licenses/LICENSE-2.0.html
 
-使用又拍云云存储USS作为附件存储空间。（This is a plugin that uses UPYUN Storage Service for attachments remote saving.）
+使用又拍云云存储USS作为附件存储空间。(This is a plugin that uses UPYUN Storage Service for attachments remote saving.)
 
 == Description ==
 
-使用又拍云云存储USS作为附件存储空间。（This is a plugin that uses UPYUN Storage Service for attachments remote saving.）
+使用又拍云云存储USS作为附件存储空间。(This is a plugin that uses UPYUN Storage Service for attachments remote saving.)
 
 * 依赖又拍云云存储USS服务：https://www.upyun.com/products/file-storage
 
@@ -27,6 +27,7 @@ License URI: http://www.apache.org/licenses/LICENSE-2.0.html
 6. 支持同步历史附件到又拍云云存储USS
 7. 支持上传时自动重命名文件（MD5或时间戳+随机数两种方式）
 8. 支持设置图片处理
+9. 支持多站点
 
 插件更多详细介绍和安装：[https://github.com/sy-records/upyun-uss-wordpress](https://github.com/sy-records/upyun-uss-wordpress)
 
@@ -51,8 +52,8 @@ QQ交流群：887595381
 
 == Screenshots ==
 
-1. screenshot-1.png
-2. screenshot-2.png
+1. 设置页面
+2. 更新数据库链接
 
 == Frequently Asked Questions ==
 
@@ -62,11 +63,15 @@ QQ交流群：887595381
 
 == Changelog ==
 
+= 1.5.0 =
+* 优化卸载逻辑
+* 修复更新数据库链接错误
+* 优化部分代码
+
 = 1.4.0 =
 * 优化代码
 * 支持 webp、heic 格式图片上传
 * 优化图片处理
-
 
 = 1.3.0 =
 * 支持 WordPress 6.3 版本
