@@ -10,7 +10,7 @@
 [![plugin installs](https://img.shields.io/wordpress/plugin/installs/uss-upyun)](https://wordpress.org/plugins/uss-upyun/)
 [![Deploy to WordPress.org](https://github.com/sy-records/upyun-uss-wordpress/actions/workflows/deploy.yml/badge.svg)](https://github.com/sy-records/upyun-uss-wordpress/actions/workflows/deploy.yml)
 
-> 使用 WordPress Playground 在线预览 [OSS Aliyun](https://wordpress.org/plugins/uss-upyun/?preview=1) 插件
+> 使用 WordPress Playground 在线预览 [USS Upyun](https://wordpress.org/plugins/uss-upyun/?preview=1) 插件
 
 ## 插件特色
 
