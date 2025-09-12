@@ -588,7 +588,7 @@ function uss_setting_page()
                         <legend>服务名称</legend>
                     </th>
                     <td>
-                        <input type="text" name="bucket" value="<?php echo $uss_bucket; ?>" size="50" placeholder="请填写服务名称"/>
+                        <input type="text" name="bucket" required value="<?php echo $uss_bucket; ?>" size="50" placeholder="请填写服务名称"/>
                         <p>请先访问 <a href="https://console.upyun.com/services/create/file/" target="_blank">又拍云控制台</a> 创建<code>云存储服务</code>，再填写以上内容。</p>
                     </td>
                 </tr>
@@ -596,14 +596,14 @@ function uss_setting_page()
                     <th>
                         <legend>操作员</legend>
                     </th>
-                    <td><input type="text" name="OperatorName" value="<?php echo $uss_OperatorName; ?>" size="50" placeholder="OperatorName"/></td>
+                    <td><input type="text" name="OperatorName" required value="<?php echo $uss_OperatorName; ?>" size="50" placeholder="OperatorName"/></td>
                 </tr>
                 <tr>
                     <th>
                         <legend>密码</legend>
                     </th>
                     <td>
-                        <input type="password" name="OperatorPwd" value="<?php echo $uss_OperatorPwd; ?>" size="50" placeholder="OperatorPwd"/>
+                        <input type="password" name="OperatorPwd" required value="<?php echo $uss_OperatorPwd; ?>" size="50" placeholder="OperatorPwd"/>
                     </td>
                 </tr>
                 <tr>
@@ -641,7 +641,7 @@ function uss_setting_page()
                         <legend>本地文件夹</legend>
                     </th>
                     <td>
-                        <input type="text" name="upload_path" value="<?php echo $upload_path; ?>" size="50" placeholder="请输入上传文件夹"/>
+                        <input type="text" name="upload_path" required value="<?php echo $upload_path; ?>" size="50" placeholder="请输入上传文件夹"/>
                         <p>附件在服务器上的存储位置，例如：<code>wp-content/uploads</code> （注意不要以“/”开头和结尾），根目录请输入<code>.</code>。</p>
                     </td>
                 </tr>
@@ -650,7 +650,7 @@ function uss_setting_page()
                         <legend>URL前缀</legend>
                     </th>
                     <td>
-                        <input type="text" name="upload_url_path" value="<?php echo $upload_url_path; ?>" size="50" placeholder="请输入URL前缀"/>
+                        <input type="text" name="upload_url_path" required value="<?php echo $upload_url_path; ?>" size="50" placeholder="请输入URL前缀"/>
 
                         <p><b>注意：</b></p>
 
@@ -710,7 +710,7 @@ function uss_setting_page()
                         <legend>数据库原链接替换</legend>
                     </th>
                     <td>
-                        <input type="text" name="old_url" size="50" placeholder="请输入要替换的旧域名"/>
+                        <input type="text" name="old_url" required size="50" placeholder="请输入要替换的旧域名"/>
                         <p>如：<code>https://qq52o.me</code></p>
                     </td>
                 </tr>
