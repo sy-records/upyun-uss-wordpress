@@ -495,13 +495,14 @@ function uss_setting_page()
     if (!current_user_can('manage_options')) {
         wp_die('Insufficient privileges!');
     }
-    $options = [];
-    if (!empty($_POST) && $_POST['type'] == 'uss_set') {
-        $nonce = $_POST['uss_set-nonce'] ?? '';
-        if (empty($nonce) || !wp_verify_nonce($nonce, 'uss_set')) {
+    if (!empty($_POST) && !empty($_POST['type'])) {
+        $nonce = $_POST["{$_POST['type']}-nonce"] ?? '';
+        if (empty($nonce) || !wp_verify_nonce($nonce, $_POST['type'])) {
             wp_die('Illegal requests!');
         }
-
+    }
+    $options = [];
+    if (!empty($_POST) && $_POST['type'] == 'upyun_uss_set') {
         $options['bucket'] = isset($_POST['bucket']) ? sanitize_text_field($_POST['bucket']) : '';
         $options['OperatorName'] = isset($_POST['OperatorName']) ? sanitize_text_field($_POST['OperatorName']) : '';
         $options['OperatorPwd'] = isset($_POST['OperatorPwd']) ? sanitize_text_field($_POST['OperatorPwd']) : '';
@@ -514,11 +515,6 @@ function uss_setting_page()
     }
 
     if (!empty($_POST) && $_POST['type'] == 'upyun_uss_all') {
-      $nonce = $_POST['upyun_uss_all-nonce'] ?? '';
-      if (empty($nonce) || !wp_verify_nonce($nonce, 'upyun_uss_all')) {
-          wp_die('Illegal requests!');
-      }
-
       $files = uss_read_dir_queue(get_home_path(), get_option('upload_path'));
         foreach ($files as $file) {
             uss_file_upload($file['key'], $file['filepath']);
@@ -528,11 +524,6 @@ function uss_setting_page()
 
     // 替换数据库链接
     if (!empty($_POST) && $_POST['type'] == 'upyun_uss_replace') {
-        $nonce = $_POST['upyun_uss_replace-nonce'] ?? '';
-        if (empty($nonce) || !wp_verify_nonce($nonce, 'upyun_uss_replace')) {
-            wp_die('Illegal requests!');
-        }
-
         $old_url = esc_url_raw($_POST['old_url']);
         $new_url = esc_url_raw($_POST['new_url']);
 
@@ -693,8 +684,8 @@ function uss_setting_page()
                     <td><input type="submit" class="button button-primary" value="保存更改"/></td>
                 </tr>
             </table>
-            <input type="hidden" name="type" value="uss_set">
-            <?php wp_nonce_field('uss_set', 'uss_set-nonce'); ?>
+            <input type="hidden" name="type" value="upyun_uss_set">
+            <?php wp_nonce_field('upyun_uss_set', 'upyun_uss_set-nonce'); ?>
         </form>
         <form method="post">
             <table class="form-table">
