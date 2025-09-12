@@ -3,7 +3,7 @@
 Plugin Name: USS Upyun
 Plugin URI: https://github.com/sy-records/upyun-uss-wordpress
 Description: 使用又拍云云存储USS作为附件存储空间。(This is a plugin that uses UPYUN Storage Service for attachments remote saving.)
-Version: 1.5.0
+Version: 1.5.1
 Author: 沈唁
 Author URI: https://qq52o.me
 License: Apache 2.0
@@ -11,14 +11,14 @@ License: Apache 2.0
 
 require_once 'sdk/vendor/autoload.php';
 
-define('USS_VERSION', '1.5.0');
+define('USS_VERSION', '1.5.1');
 define('USS_BASEFOLDER', plugin_basename(dirname(__FILE__)));
 
 use Upyun\Upyun;
 use Upyun\Config;
 
 if (!function_exists('get_home_path')) {
-    require_once(ABSPATH . 'wp-admin/includes/file.php');
+    require_once ABSPATH . 'wp-admin/includes/file.php';
 }
 
 // 初始化选项
@@ -355,14 +355,14 @@ function uss_delete_remote_attachment($post_id)
 add_action('delete_attachment', 'uss_delete_remote_attachment');
 
 // 当upload_path为根目录时，需要移除URL中出现的“绝对路径”
-function uss_modefiy_img_url($url, $post_id)
+function uss_modify_img_url($url, $post_id)
 {
     // 移除 ./ 和 项目根路径
     return str_replace(['./', get_home_path()], '', $url);
 }
 
 if (get_option('upload_path') == '.') {
-    add_filter('wp_get_attachment_url', 'uss_modefiy_img_url', 30, 2);
+    add_filter('wp_get_attachment_url', 'uss_modify_img_url', 30, 2);
 }
 
 /**
@@ -496,7 +496,12 @@ function uss_setting_page()
         wp_die('Insufficient privileges!');
     }
     $options = [];
-    if (!empty($_POST) and $_POST['type'] == 'uss_set') {
+    if (!empty($_POST) && $_POST['type'] == 'uss_set') {
+        $nonce = $_POST['uss_set-nonce'] ?? '';
+        if (empty($nonce) || !wp_verify_nonce($nonce, 'uss_set')) {
+            wp_die('Illegal requests!');
+        }
+
         $options['bucket'] = isset($_POST['bucket']) ? sanitize_text_field($_POST['bucket']) : '';
         $options['OperatorName'] = isset($_POST['OperatorName']) ? sanitize_text_field($_POST['OperatorName']) : '';
         $options['OperatorPwd'] = isset($_POST['OperatorPwd']) ? sanitize_text_field($_POST['OperatorPwd']) : '';
@@ -508,8 +513,13 @@ function uss_setting_page()
         $options['update_file_name'] = isset($_POST['update_file_name']) ? sanitize_text_field($_POST['update_file_name']) : 'false';
     }
 
-    if (!empty($_POST) and $_POST['type'] == 'upyun_uss_all') {
-        $files = uss_read_dir_queue(get_home_path(), get_option('upload_path'));
+    if (!empty($_POST) && $_POST['type'] == 'upyun_uss_all') {
+      $nonce = $_POST['upyun_uss_all-nonce'] ?? '';
+      if (empty($nonce) || !wp_verify_nonce($nonce, 'upyun_uss_all')) {
+          wp_die('Illegal requests!');
+      }
+
+      $files = uss_read_dir_queue(get_home_path(), get_option('upload_path'));
         foreach ($files as $file) {
             uss_file_upload($file['key'], $file['filepath']);
         }
@@ -517,7 +527,7 @@ function uss_setting_page()
     }
 
     // 替换数据库链接
-    if (!empty($_POST) and $_POST['type'] == 'upyun_uss_replace') {
+    if (!empty($_POST) && $_POST['type'] == 'upyun_uss_replace') {
         $nonce = $_POST['upyun_uss_replace-nonce'] ?? '';
         if (empty($nonce) || !wp_verify_nonce($nonce, 'upyun_uss_replace')) {
             wp_die('Illegal requests!');
@@ -526,7 +536,7 @@ function uss_setting_page()
         $old_url = esc_url_raw($_POST['old_url']);
         $new_url = esc_url_raw($_POST['new_url']);
 
-        if (!empty($old_url) && !empty($new_url)) {
+        if (!empty($old_url)) {
             global $wpdb;
             // 文章内容
             $posts_name = $wpdb->prefix . 'posts';
@@ -574,8 +584,6 @@ function uss_setting_page()
     $uss_image_process = esc_attr($uss_options['image_process']);
 
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? 'https://' : 'http://';
-
-    $nonce = wp_nonce_field('upyun_uss_replace', 'upyun_uss_replace-nonce', true, false);
     ?>
     <div class="wrap" style="margin: 10px;">
         <h1>又拍云 USS <span style="font-size: 13px;">当前版本：<?php echo USS_VERSION; ?></span></h1>
@@ -686,6 +694,7 @@ function uss_setting_page()
                 </tr>
             </table>
             <input type="hidden" name="type" value="uss_set">
+            <?php wp_nonce_field('uss_set', 'uss_set-nonce'); ?>
         </form>
         <form method="post">
             <table class="form-table">
@@ -694,6 +703,7 @@ function uss_setting_page()
                         <legend>同步历史附件</legend>
                     </th>
                     <input type="hidden" name="type" value="upyun_uss_all">
+                    <?php wp_nonce_field('upyun_uss_all', 'upyun_uss_all-nonce'); ?>
                     <td>
                         <input type="submit" class="button button-secondary" value="开始同步"/>
                         <p><b>注意：如果是首次同步，执行时间将会十分十分长（根据你的历史附件数量），有可能会因执行时间过长，页面显示超时或者报错。<br> 所以，建议那些几千上万附件的用户考虑官方的 <a target="_blank" rel="nofollow" href="https://help.upyun.com/knowledge-base/developer_tools/">同步工具</a></b></p>
@@ -727,7 +737,7 @@ function uss_setting_page()
                         <legend></legend>
                     </th>
                     <input type="hidden" name="type" value="upyun_uss_replace">
-                    <?php echo $nonce; ?>
+                    <?php wp_nonce_field('upyun_uss_replace', 'upyun_uss_replace-nonce'); ?>
                     <td>
                         <input type="submit" class="button button-secondary" value="开始替换"/>
                         <p><b>注意：如果是首次替换，请注意备份！此功能会替换文章以及设置的特色图片（题图）等使用的资源链接</b></p>
