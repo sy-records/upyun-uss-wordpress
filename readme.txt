@@ -5,7 +5,7 @@ Tags: USS, 又拍云, 对象存储, upyun, 云存储
 Requires at least: 4.6
 Tested up to: 6.8
 Requires PHP: 7.0.0
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: Apache 2.0
 License URI: http://www.apache.org/licenses/LICENSE-2.0.html
 
@@ -62,6 +62,9 @@ QQ交流群：887595381
 这个插件已经加上了替换数据库中之前的旧资源地址链接功能，只需要填好对应的链接即可
 
 == Changelog ==
+
+= 1.5.1 =
+* Improve nonce verification for security
 
 = 1.5.0 =
 * 优化卸载逻辑
